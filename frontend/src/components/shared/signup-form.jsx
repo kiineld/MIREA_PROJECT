@@ -1,116 +1,167 @@
-import { Button } from "@/components/ui/button.jsx"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Controller, useForm } from "react-hook-form"
+
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card.jsx"
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card"
 import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field.jsx"
+    Field,
+    FieldDescription,
+    FieldError,
+    FieldGroup,
+    FieldLabel,
+} from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import {useNavigate} from "react-router-dom";
-import {useState} from "react";
-import {Register} from "@/auth";
+import { useNavigate } from "react-router-dom"
+import { Register } from "@/auth"
+import {signupSchema} from "@/components/forms/signup-schema.jsx";
 
-export function SignupForm({...props}) {
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password1, setPassword1] = useState("");
-  const [password2, setPassword2] = useState("");
-  const navigate = useNavigate();
 
-  const onSubmit = async (e) => {
-    e.preventDefault();
-    const payload = {
-      username: username,
-      email: email,
-      password1: password1,
-      password2: password2,
+export function SignupForm({className, ...props}) {
+    const navigate = useNavigate()
+
+    const form = useForm({
+        resolver: zodResolver(signupSchema),
+        defaultValues: {
+            username: "",
+            email: "",
+            password1: "",
+            password2: "",
+        },
+    })
+
+    const onSubmit = async (data) => {
+        const payload = {
+            username: data.username,
+            email: data.email,
+            password1: data.password1,
+            password2: data.password2,
+        }
+        Register(payload)
+            .then(function (result) {
+                if (result.status === 201) {
+                    navigate("/dashboard");
+                }
+            })
+            .catch (function (error) {
+                console.log(error?.response?.data);
+                alert(error?.response?.data)
+            })
     }
-    Register(payload)
-        .then(function (result) {
-          if (result.status === 201) {
-            navigate("/dashboard");
-          }
-        })
-        .catch (function (error) {
-          console.log(error?.response?.data.non_field_errors);
-          alert(error?.response?.data.non_field_errors)
-        })
-  }
 
-  return (
-    <Card {...props}>
-      <CardHeader>
-        <CardTitle>Create an account</CardTitle>
-        <CardDescription>
-          Enter your information below to create your account
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={onSubmit}>
-          <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="name">Name</FieldLabel>
-              <Input
-                  id="name"
-                  type="text"
-                  placeholder="Name"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="email">Email</FieldLabel>
-              <Input
-                  id="email"
-                  type="email"
-                  placeholder="email@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required />
-              <FieldDescription>
-                We&apos;ll use this to contact you. We will not share your email
-                with anyone else.
-              </FieldDescription>
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="password1">Password</FieldLabel>
-              <Input
-                  id="password1"
-                  type="password"
-                  value={password1}
-                  onChange={(e) => setPassword1(e.target.value)}
-                  required />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="password2">Confirm Password</FieldLabel>
-              <Input
-                  id="password2"
-                  type="password"
-                  value={password2}
-                  onChange={(e) => setPassword2(e.target.value)}
-                  required />
-            </Field>
-            <FieldGroup>
-              <Field>
-                <Button type="submit" className="cursor-pointer">Create Account</Button>
-                <Button variant="outline" type="button" disabled>
-                  Sign up with Google
-                </Button>
-                <FieldDescription className="px-6 text-center">
-                  Already have an account? <a href="/login">Sign in</a>
-                </FieldDescription>
-              </Field>
-            </FieldGroup>
-          </FieldGroup>
-        </form>
-      </CardContent>
-    </Card>
-  );
+    return (
+        <div className={cn("flex flex-col gap-6", className)} {...props}>
+            <Card>
+                <CardHeader className="text-center">
+                    <CardTitle className="text-xl">Create your account</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <form onSubmit={form.handleSubmit(onSubmit)}>
+                        <FieldGroup>
+                            <Controller
+                                name="username"
+                                control={form.control}
+                                render={({ field, fieldState }) => (
+                                    <Field data-invalid={fieldState.invalid}>
+                                        <FieldLabel htmlFor="username">Username</FieldLabel>
+                                        <Input
+                                            {...field}
+                                            id="username"
+                                            placeholder="John Doe"
+                                            aria-invalid={fieldState.invalid}
+                                        />
+                                        {fieldState.error && (
+                                            <FieldError errors={[fieldState.error]} />
+                                        )}
+                                    </Field>
+                                )}
+                            />
+
+                            <Controller
+                                name="email"
+                                control={form.control}
+                                render={({ field, fieldState }) => (
+                                    <Field data-invalid={fieldState.invalid}>
+                                        <FieldLabel htmlFor="email">Email</FieldLabel>
+                                        <Input
+                                            {...field}
+                                            id="email"
+                                            type="email"
+                                            placeholder="m@example.com"
+                                            aria-invalid={fieldState.invalid}
+                                        />
+                                        {fieldState.error && (
+                                            <FieldError errors={[fieldState.error]} />
+                                        )}
+                                    </Field>
+                                )}
+                            />
+
+                            <Field className="grid grid-cols-2 gap-4">
+                                <Controller
+                                    name="password1"
+                                    control={form.control}
+                                    render={({ field, fieldState }) => (
+                                        <Field data-invalid={fieldState.invalid}>
+                                            <FieldLabel htmlFor="password1">Password</FieldLabel>
+                                            <Input
+                                                {...field}
+                                                id="password1"
+                                                type="password"
+                                                placeholder="********"
+                                                aria-invalid={fieldState.invalid}
+                                            />
+                                            {fieldState.error && (
+                                                <FieldError errors={[fieldState.error]} />
+                                            )}
+                                        </Field>
+                                    )}
+                                />
+
+                                <Controller
+                                    name="password2"
+                                    control={form.control}
+                                    render={({ field, fieldState }) => (
+                                        <Field data-invalid={fieldState.invalid}>
+                                            <FieldLabel htmlFor="password2">
+                                                Confirm Password
+                                            </FieldLabel>
+                                            <Input
+                                                {...field}
+                                                id="password2"
+                                                type="password"
+                                                placeholder="********"
+                                                aria-invalid={fieldState.invalid}
+                                            />
+                                            {fieldState.error && (
+                                                <FieldError errors={[fieldState.error]} />
+                                            )}
+                                        </Field>
+                                    )}
+                                />
+                            </Field>
+
+                            <Field>
+                                <Button type="submit">Create Account</Button>
+                                <FieldDescription className="text-center">
+                                    Already have an account? <a href="/login">Sign in</a>
+                                </FieldDescription>
+                            </Field>
+
+                        </FieldGroup>
+                    </form>
+                </CardContent>
+            </Card>
+
+            {/*<FieldDescription className="px-6 text-center">*/}
+            {/*    By clicking continue, you agree to our <a href="#">Terms of Service</a> and{" "}*/}
+            {/*    <a href="#">Privacy Policy</a>.*/}
+            {/*</FieldDescription>*/}
+        </div>
+    )
 }

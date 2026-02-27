@@ -44,7 +44,7 @@ function ProtectedRoute({ children }) {
 
     if (isAuthorized === null) {
         return (
-            <div className="flex items-center justify-center min-h-screen min-w-screen">
+            <div className="bg-muted flex items-center justify-center min-h-screen min-w-screen">
                 <Spinner className="size-15"/>
             </div>
         )
